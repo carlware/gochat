@@ -20,6 +20,9 @@ type Hub struct {
 
 	// Unregister requests from clients.
 	unregister chan *Client
+
+	// Output messages to external interfaces (dependency injection)
+	send chan []byte
 }
 
 func NewHub() *Hub {
@@ -28,6 +31,7 @@ func NewHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		send:       make(chan []byte),
 	}
 }
 
@@ -45,15 +49,32 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			for client := range h.clients {
-				fmt.Println("message to client", message, client)
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(h.clients, client)
-				}
-			}
+			fmt.Println("message to client", message)
+			h.send <- message
+			// stockbot.SendMessage(message)
+			// for client := range h.clients {
+			// 	select {
+			// 	case client.send <- message:
+			// 	default:
+			// 		close(client.send)
+			// 		delete(h.clients, client)
+			// 	}
+			// }
+		}
+	}
+}
+
+func (h *Hub) Receive() (chan []byte, error) {
+	return h.send, nil
+}
+
+func (h *Hub) Broadcast(msg []byte) {
+	for client := range h.clients {
+		select {
+		case client.send <- msg:
+		default:
+			close(client.send)
+			delete(h.clients, client)
 		}
 	}
 }

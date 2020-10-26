@@ -13,7 +13,8 @@ require (
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/rs/cors v1.7.0 // indirect
+	github.com/streadway/amqp v1.0.0
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/tools/gopls v0.5.1 // indirect
+	gopkg.in/zeromq/goczmq.v1 v1.0.0-20160426111743-8b64dad1ba13 // indirect
 )

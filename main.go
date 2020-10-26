@@ -4,9 +4,11 @@ import (
 	"context"
 	"flag"
 
+	"github.com/carlware/gochat/chatroom/cases"
 	"github.com/carlware/gochat/common/auth"
 	"github.com/carlware/gochat/dispatchers/rest"
 	"github.com/carlware/gochat/dispatchers/websocket"
+	"github.com/carlware/gochat/stockbot"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -20,6 +22,11 @@ func main() {
 
 	hub := websocket.NewHub()
 	go hub.Run()
+	go stockbot.RunRabbitMQ()
+	go stockbot.Listen()
+	go cases.ListenMessages(&cases.Options{
+		BroadcastReceiver: hub,
+	})
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -27,7 +34,7 @@ func main() {
 	e.GET("/ws", func(c echo.Context) error {
 		websocket.ServeWs(hub, c.Response(), c.Request())
 		return nil
-	}, auth.IsLoggedIn)
+	})
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowMethods: []string{"POST", "GET"},
 		AllowOrigins: []string{"*"},
@@ -37,5 +44,5 @@ func main() {
 	e.GET("/profiles", rest.ListProfiles, auth.IsLoggedIn)
 	e.POST("/login", rest.Login)
 
-	e.Logger.Fatal(e.Start(*addr))
+	go e.Logger.Fatal(e.Start(*addr))
 }
