@@ -1,13 +1,10 @@
 package cmds
 
+import "github.com/carlware/gochat/chatroom/models"
+
 type Command struct {
 	Name     string `json:"name"`
 	Argument string `json:"argument"`
-}
-
-type Error struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
 }
 
 type Request struct {
@@ -16,15 +13,32 @@ type Request struct {
 }
 
 type Response struct {
-	Response string `json:"response"`
-	Extra    string `json:"extra"`
-	Error    Error  `json:"error"`
+	Result string        `json:"response"`
+	Extra  string        `json:"extra"`
+	Error  *models.Error `json:"error"`
+}
+
+type MQRequest struct {
+	Command string `json:"command"`
+	Extra   string `json:"extra"`
+}
+
+type MQResponse struct {
+	Result string        `json:"result"`
+	Extra  string        `json:"extra"`
+	Error  *models.Error `json:"error"`
 }
 
 type Executor interface {
-	Execute(arg string) *Response
-	Prepare(*Request) *Request
+	Execute(arg string) string
+	Prepare(*Request) string
 	Type() string
 }
 
 type CommandHash map[string]Executor
+
+type CommandProcesor interface {
+	IsCommand(raw string) (*Command, bool)
+	Results() chan *Response
+	Process(req *Request)
+}

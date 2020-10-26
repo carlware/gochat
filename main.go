@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/carlware/gochat/chatroom/cases"
+	"github.com/carlware/gochat/chatroom/cmds"
 	"github.com/carlware/gochat/chatroom/interfaces/rabbitmq"
 	"github.com/carlware/gochat/common/auth"
 	"github.com/carlware/gochat/common/config"
@@ -28,16 +29,22 @@ func main() {
 	fmt.Println(cfg)
 
 	hub := websocket.NewHub()
-	mQ, err := rabbitmq.NewServer(cfg.RabbiMQ.Host, cfg.RabbiMQ.CommandReqQueue)
+	qCommadProducer, err := rabbitmq.NewServer(cfg.RabbiMQ.Host, cfg.RabbiMQ.CommandReqQueue)
+	if err != nil {
+		panic(err)
+	}
+	qCommadReceiver, err := rabbitmq.NewServer(cfg.RabbiMQ.Host, cfg.RabbiMQ.CommandResQueue)
 	if err != nil {
 		panic(err)
 	}
 
+	cProcesor := cmds.NewCommandProcessor(qCommadProducer, qCommadReceiver)
+	cProcesor.Run()
+
 	go hub.Run()
-	go mQ.Listen()
-	go cases.ListenMessages(&cases.Options{
-		BroadcastReceiver: hub,
-	})
+	go qCommadReceiver.Listen()
+	mListener := cases.NewMessageListener(hub, cProcesor)
+	mListener.Listen()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

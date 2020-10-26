@@ -42,7 +42,7 @@ func NewServer(host, queueName string) (*server, error) {
 
 }
 
-func (p *server) Sender(message []byte) error {
+func (p *server) Send(message []byte) error {
 	err := p.channel.Publish(
 		"",
 		p.queueName,

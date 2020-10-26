@@ -2,49 +2,58 @@ package cmds
 
 import (
 	"encoding/json"
-	"errors"
 	"strings"
 
+	"github.com/carlware/gochat/chatroom/models"
 	"github.com/carlware/gochat/common/mq"
 )
 
+var commands CommandHash
+
 type listener struct {
-	commands CommandHash
+	commandSender   mq.Sender
+	commandReceiver mq.Listener
+	send            chan []byte
+	results         chan *Response
 }
 
-var commands CommandHash
-var mQ *mq.ListenSender
-var send chan []byte
-var results chan *Response
-
 func init() {
-	send = make(chan []byte)
-	results = make(chan []byte)
 	commands = CommandHash{}
 }
 
-func Process(req *Request) error {
+func NewCommandProcessor(sender mq.Sender, receiver mq.Listener) *listener {
+	return &listener{
+		send:            make(chan []byte),
+		results:         make(chan *Response),
+		commandSender:   sender,
+		commandReceiver: receiver,
+	}
+}
+
+func (p *listener) Process(req *Request) {
 	if cmd, ok := commands[req.Command.Name]; ok {
 		switch cmd.Type() {
 		case "queue":
-			req := cmd.Prepare(req)
-			if mQ != nil {
-				raw, err := json.Marshal(req)
-				if err != nil {
-					return err
-				}
-				mQ.Send(raw)
-			} else {
-				return errors.New("MQ broker is not set")
-			}
+			prep := cmd.Prepare(req)
+			raw, _ := json.Marshal(&MQRequest{
+				Command: prep,
+				Extra:   req.Extra,
+			})
+			p.commandSender.Send(raw)
 		case "fast":
 			result := cmd.Execute(req.Command.Name)
-			results <- &result
+			p.results <- &Response{
+				Result: result,
+			}
 		}
 	}
 }
 
-func IsCommand(raw string) (*Command, bool) {
+func (p *listener) Results() chan *Response {
+	return p.results
+}
+
+func (p *listener) IsCommand(raw string) (*Command, bool) {
 	token := strings.Split(raw, "=")
 	if len(token) != 2 {
 		return nil, false
@@ -59,29 +68,26 @@ func Add(name string, command Executor) {
 	commands[name] = command
 }
 
-func SetMQ(mq *mq.ListenSender) {
-	if mQ != nil {
-		mQ = mq
-	}
-}
+func (p *listener) Run() {
 
-func Results() chan *Response {
-	return results
-}
-
-func Listen() {
+	// Listen for MQ broker results
 	go func() {
-		consumer := mQ.Listen()
+		consumer, _ := p.commandReceiver.Listen()
 		for msg := range consumer {
+			mRes := &MQResponse{}
 			res := &Response{}
-			err := json.Unmarshal(msg, res)
+			err := json.Unmarshal(msg, mRes)
 			if err != nil {
-				res.Error = Error{
+				res.Error = &models.Error{
 					Code:    "json",
-					Message: "Cannot decode",
+					Message: "cannot decode mq result",
 				}
+			} else {
+				res.Result = mRes.Result
+				res.Extra = mRes.Extra
+				res.Error = mRes.Error
 			}
-			results <- Response
+			p.results <- res
 		}
 	}()
 }
