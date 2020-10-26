@@ -1,10 +1,5 @@
 package mq
 
-type Message struct {
-	Payload string
-	Extra   string
-}
-
 type Sender interface {
 	Send([]byte) error
 }
