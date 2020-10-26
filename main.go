@@ -3,27 +3,38 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 
 	"github.com/carlware/gochat/chatroom/cases"
+	"github.com/carlware/gochat/chatroom/interfaces/rabbitmq"
 	"github.com/carlware/gochat/common/auth"
+	"github.com/carlware/gochat/common/config"
 	"github.com/carlware/gochat/dispatchers/rest"
 	"github.com/carlware/gochat/dispatchers/websocket"
-	"github.com/carlware/gochat/stockbot"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 var addr = flag.String("addr", ":8080", "http server address")
+var cfgFile = flag.String("file", "", "conf file")
 var ctx = context.Background()
 
 func main() {
 	flag.Parse()
 	e := echo.New()
 
+	cfg := &config.Configuration{}
+	config.Load(cfg, "GOCHAT", *cfgFile)
+	fmt.Println(cfg)
+
 	hub := websocket.NewHub()
+	mQ, err := rabbitmq.NewServer(cfg.RabbiMQ.Host, cfg.RabbiMQ.CommandReqQueue)
+	if err != nil {
+		panic(err)
+	}
+
 	go hub.Run()
-	go stockbot.RunRabbitMQ()
-	go stockbot.Listen()
+	go mQ.Listen()
 	go cases.ListenMessages(&cases.Options{
 		BroadcastReceiver: hub,
 	})

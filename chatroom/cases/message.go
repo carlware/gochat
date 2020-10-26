@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/carlware/gochat/chatroom"
+	"github.com/carlware/gochat/chatroom/cmds"
 )
 
 type Options struct {
@@ -19,6 +20,11 @@ func ListenMessages(opts *Options) {
 	go func() {
 		for msg := range messages {
 			fmt.Println("incoming message", string(msg))
+			raw := string(msg)
+			if cmd, ok := cmds.IsCommand(); ok {
+
+			}
+
 			opts.BroadcastReceiver.Broadcast(msg)
 		}
 	}()
