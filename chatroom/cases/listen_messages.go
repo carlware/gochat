@@ -3,7 +3,6 @@ package cases
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/carlware/gochat/chatroom"
@@ -61,7 +60,6 @@ func (s *mServer) Listen() {
 	go func() {
 		results := s.cp.Results()
 		for result := range results {
-			fmt.Println("message command response procesor", result)
 			extra := CommandExtra{}
 			_ = json.Unmarshal([]byte(result.Extra), &extra)
 			response := &MessageResponse{

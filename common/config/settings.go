@@ -10,7 +10,7 @@ type Configuration struct {
 
 	RabbiMQ struct {
 		Host            string `yaml:"host" default:"amqp://guest:guest@localhost:5672/"`
-		CommandReqQueue string `yaml:"command_req_queue" default:"commandReq1"`
-		CommandResQueue string `yaml:"command_res_queue" default:"commandRes1"`
+		TopicCommandReq string `yaml:"command_req_queue" default:"command.req"`
+		TopicCommandRes string `yaml:"command_res_queue" default:"command.res"`
 	} `yaml:"psql"`
 }

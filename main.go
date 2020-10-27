@@ -42,7 +42,7 @@ func main() {
 	// run micro-service accounts
 	accounts.RunMicroAccounts(e)
 
-	// stockbot
+	// run micro-service stockbot
 	go stockbot.Run(cfg)
 
 	go e.Logger.Fatal(e.Start(*addr))

@@ -75,7 +75,7 @@ function App() {
                     Learn React
                 </a>
                 <button onClick={() => sendMessage("ping")}>Send</button>
-                <button onClick={() => sendCommand("APPLE.US")}>Command</button>
+                <button onClick={() => sendCommand("AAPL.US")}>Command</button>
             </header>
         </div>
     );

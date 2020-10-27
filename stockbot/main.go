@@ -2,9 +2,12 @@ package stockbot
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"time"
+	"net/http"
+	"strings"
 
+	csvtag "github.com/artonge/go-csv-tag/v2"
 	"github.com/carlware/gochat/common/config"
 	"github.com/carlware/gochat/common/mq/interfaces/rabbitmq"
 )
@@ -37,7 +40,6 @@ func Run(cfg *config.Configuration) {
 		for msg := range msgs {
 			req := Request{}
 			json.Unmarshal(msg, &req)
-			fmt.Println("message", req)
 			result, err := getStock(req.Command)
 			response := Response{}
 			response.Result = result
@@ -57,7 +59,37 @@ func Run(cfg *config.Configuration) {
 	<-forever
 }
 
+type Stock struct {
+	Symbol string  `csv:"Symbol"`
+	Date   string  `csv:"Date"`
+	Time   string  `csv:"Time"`
+	Open   float64 `csv:"Open"`
+	High   float64 `csv:"High"`
+	Low    float64 `csv:"Low"`
+	Close  float64 `csv:"Close"`
+	Volume string  `csv:"Volume"`
+}
+
 func getStock(cmd string) (string, error) {
-	t := time.Now()
-	return "APPL.US quote is $93.42 per share." + t.Format("20060102150405"), nil
+	stockCode := strings.ToLower(cmd)
+	query := fmt.Sprintf("https://stooq.com/q/l/?s=%s&f=sd2t2ohlcv&h&e=csv", stockCode)
+
+	resp, err := http.Get(query)
+	if err != nil {
+		return "", errors.New("server error")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", errors.New("Error from Stooq server")
+	}
+
+	stocks := []Stock{}
+	err = csvtag.LoadFromReader(resp.Body, &stocks)
+
+	if len(stocks) < 1 {
+		return "", errors.New(fmt.Sprintf("Stock: %s not available", cmd))
+	}
+
+	return fmt.Sprintf("%s quote is $%.2f per share.", cmd, stocks[0].Close), nil
 }

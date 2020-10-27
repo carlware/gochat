@@ -7,7 +7,7 @@ func (s *stock) Execute(arg string) (string, error) {
 }
 
 func (s *stock) Prepare(req *Request) string {
-	return req.Command.Name + "=" + req.Command.Argument
+	return req.Command.Argument
 }
 
 func (s *stock) Type() string {

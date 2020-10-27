@@ -3,6 +3,7 @@ module github.com/carlware/gochat
 go 1.14
 
 require (
+	github.com/artonge/go-csv-tag/v2 v2.0.7
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/go-stack/stack v1.8.0 // indirect
