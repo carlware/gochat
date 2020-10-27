@@ -12,12 +12,14 @@ import (
 type controller struct {
 	roomdb    chatroom.Room
 	messagedb chatroom.Message
+	br        chatroom.BroadcastReceiver
 }
 
-func NewChatController(roomdb chatroom.Room, messagedb chatroom.Message) *controller {
+func NewChatController(roomdb chatroom.Room, messagedb chatroom.Message, br chatroom.BroadcastReceiver) *controller {
 	return &controller{
 		roomdb:    roomdb,
 		messagedb: messagedb,
+		br:        br,
 	}
 }
 
@@ -46,6 +48,7 @@ func (ctr *controller) CreateRoom(c echo.Context) error {
 
 	room, err := cases.CreateRoom(&cases.OptsRoom{
 		Room: ctr.roomdb,
+		BR:   ctr.br,
 	}, &req)
 
 	if err != nil {

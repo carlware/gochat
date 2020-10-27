@@ -1,17 +1,21 @@
 package cases
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/carlware/gochat/chatroom"
 	"github.com/carlware/gochat/chatroom/cmds"
 	"github.com/carlware/gochat/chatroom/models"
+	"github.com/google/uuid"
 )
 
 type mServer struct {
-	br chatroom.BroadcastReceiver
-	cp cmds.CommandProcesor
+	br        chatroom.BroadcastReceiver
+	cp        cmds.CommandProcesor
+	messagedb chatroom.Message
 }
 
 type MessageRequest struct {
@@ -34,10 +38,11 @@ type CommandExtra struct {
 	UID string `json:"uid"`
 }
 
-func NewMessageListener(br chatroom.BroadcastReceiver, cp cmds.CommandProcesor) *mServer {
+func NewMessageListener(br chatroom.BroadcastReceiver, cp cmds.CommandProcesor, mdb chatroom.Message) *mServer {
 	return &mServer{
-		br: br,
-		cp: cp,
+		br:        br,
+		cp:        cp,
+		messagedb: mdb,
 	}
 }
 
@@ -48,7 +53,7 @@ func (s *mServer) Listen() {
 	// Listen incoming messages
 	go func() {
 		for msg := range messages {
-			messageProccesor(msg, s.br, s.cp)
+			messageProccesor(msg, s.br, s.cp, s.messagedb)
 		}
 	}()
 
@@ -68,12 +73,12 @@ func (s *mServer) Listen() {
 			}
 			encoded, _ := json.Marshal(response)
 			s.br.Broadcast(encoded)
-			fmt.Println("broadcast result")
+			addMessage(s.messagedb, extra.RID, result.Result, "bot")
 		}
 	}()
 }
 
-func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.CommandProcesor) {
+func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.CommandProcesor, mdb chatroom.Message) {
 	req := MessageRequest{}
 
 	err := json.Unmarshal(raw, &req)
@@ -97,6 +102,7 @@ func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.Command
 		if result != nil {
 			r, _ := json.Marshal(result)
 			br.Broadcast(r)
+			addMessage(mdb, req.RID, result.Message, "bot")
 		}
 	case "message":
 		res := &MessageResponse{
@@ -107,6 +113,7 @@ func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.Command
 		}
 		r, _ := json.Marshal(res)
 		br.Broadcast(r)
+		addMessage(mdb, req.RID, req.Message, req.UID)
 	}
 }
 
@@ -124,4 +131,14 @@ func processCommand(req *MessageRequest, extra []byte, cp cmds.CommandProcesor) 
 			Message: "Not found",
 		},
 	}
+}
+
+func addMessage(mdb chatroom.Message, rid, msg, uid string) {
+	mdb.Add(context.TODO(), &models.Message{
+		ID:      uuid.New().String(),
+		RID:     rid,
+		UID:     uid,
+		Created: time.Now(),
+		Message: msg,
+	})
 }

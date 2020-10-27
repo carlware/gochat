@@ -15,14 +15,14 @@ func RunMicroChatroom(e *echo.Echo, cfg *config.Configuration) {
 	dbRoom := memorydb.NewRoom()
 	dbMessage := memorydb.NewMessage()
 
-	ctrl := rest.NewChatController(dbRoom, dbMessage)
-
 	// run websocket listener
 	hub := websocket.NewHub()
 	go hub.Run()
 
+	ctrl := rest.NewChatController(dbRoom, dbMessage, hub)
 	e.GET("/rooms", ctrl.ListRoom)
 	e.POST("/rooms", ctrl.CreateRoom)
+	e.GET("/messages/:id", ctrl.ListMessage)
 	e.GET("/ws", func(c echo.Context) error {
 		websocket.ServeWs(hub, c.Response(), c.Request())
 		return nil
@@ -39,7 +39,7 @@ func RunMicroChatroom(e *echo.Echo, cfg *config.Configuration) {
 	go cProcesor.Run()
 
 	// listen incoming messages from websocket and process commands from it
-	mListener := cases.NewMessageListener(hub, cProcesor)
+	mListener := cases.NewMessageListener(hub, cProcesor, dbMessage)
 	mListener.Listen()
 
 }
