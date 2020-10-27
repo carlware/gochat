@@ -12,6 +12,11 @@ type Profile struct {
 	PasswordHashed string `json:"-"`
 }
 
+type Error struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 func NewProfile(name, avatar, password string) *Profile {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

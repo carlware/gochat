@@ -6,13 +6,9 @@ import (
 	"net/http"
 
 	"github.com/carlware/gochat/accounts/cases"
+	"github.com/carlware/gochat/accounts/models"
 	"github.com/labstack/echo/v4"
 )
-
-type StandardError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
 
 func ListProfiles(c echo.Context) error {
 	profiles := cases.List(context.TODO())
@@ -24,7 +20,7 @@ func Login(c echo.Context) error {
 	req := &cases.LoginRequest{}
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, &StandardError{
+		return c.JSON(http.StatusBadRequest, &models.Error{
 			Code:    "login",
 			Message: err.Error(),
 		})
@@ -33,7 +29,7 @@ func Login(c echo.Context) error {
 	jwt, err := cases.Login(req)
 	fmt.Println(jwt, req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, &StandardError{
+		return c.JSON(http.StatusBadRequest, &models.Error{
 			Code:    "login",
 			Message: err.Error(),
 		})

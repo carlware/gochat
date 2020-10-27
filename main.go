@@ -4,10 +4,9 @@ import (
 	"context"
 	"flag"
 
-	"github.com/carlware/gochat/common/auth"
 	"github.com/carlware/gochat/common/config"
+	"github.com/carlware/gochat/dispatchers/accounts"
 	"github.com/carlware/gochat/dispatchers/chatroom"
-	"github.com/carlware/gochat/dispatchers/rest"
 	"github.com/carlware/gochat/stockbot"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -37,14 +36,14 @@ func main() {
 	cfg := &config.Configuration{}
 	config.Load(cfg, "GOCHAT", *cfgFile)
 
-	// run microservice chat
+	// run micro-service chat
 	chatroom.RunMicroChatroom(e, cfg)
+
+	// run micro-service accounts
+	accounts.RunMicroAccounts(e)
 
 	// stockbot
 	go stockbot.Run(cfg)
-
-	e.GET("/profiles", rest.ListProfiles, auth.IsLoggedIn)
-	e.POST("/login", rest.Login)
 
 	go e.Logger.Fatal(e.Start(*addr))
 }
