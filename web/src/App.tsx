@@ -1,7 +1,21 @@
-import React, { useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
+import {Flex, Avatar, Button} from '@chakra-ui/core';
 import './App.css';
 
+const callAPI = (url: string, options: any): Promise<any> => {
+  return new Promise(async (resolve, reject) => {
+    fetch(url, options)
+      .then(async (response) => {
+        const text = await response.text()
+        if (!response.ok) {
+          reject(JSON.parse(text));
+        }
+        return text;
+      })
+      .then(response => resolve(JSON.parse(response)))
+      .catch(error => reject(error));
+  });
+}
 
 interface Error {
     Code: string
@@ -23,8 +37,58 @@ interface MessageRequest {
     message: string
 }
 
+interface Message {
+   id: string
+   rid: string
+   uid: string
+   created: string
+   message: string
+}
+
+interface Room {
+  id: string
+  name: string
+}
+
+
+interface RoomListProps {
+  messages: Message[]
+}
+
+function RoomList({ messages=[] }: RoomListProps) {
+  return(
+    <span>room list</span>
+  )
+}
+
+function Room() {
+  
+  return(
+  <>
+    <span>room</span>
+  </>
+  ) 
+}
+
+function Rooms() {
+
+}
+
+function NewRoom() {
+
+}
+
+function SendMessage() {
+
+}
+
+function LoginModal() {
+
+}
+
 function App() {
     let conn: WebSocket
+    const [rooms, SetRooms] = useState([])
 
     useEffect(() => {
         conn = new WebSocket("ws://127.0.0.1:8080/ws");
@@ -38,6 +102,7 @@ function App() {
             console.log(evt)
         };
     })
+
 
     const sendMessage = (msg: string = "") => {
         const message: MessageRequest = {
@@ -60,24 +125,23 @@ function App() {
 
 
     return (
-        <div className="App">
-            <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    Edit <code>src/App.tsx</code> and save to reload.
-                </p>
-                <a
-                    className="App-link"
-                    href="https://reactjs.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Learn React
-                </a>
-                <button onClick={() => sendMessage("ping")}>Send</button>
-                <button onClick={() => sendCommand("AAPL.US")}>Command</button>
-            </header>
-        </div>
+      <Flex flexDirection="column" width="100%">
+        <Flex justifyContent="space-between" width="100%" px="2rem" backgroundColor="#34495e" paddingTop="1rem" paddingBottom="1rem">
+          <Avatar name="Carlos" />
+          <Button>Logout</Button>
+        </Flex>
+        <Flex width="100%" >
+          <Flex flex="3" backgroundColor="#ecf0f1" height="90vh">
+            
+          </Flex>
+          
+          <Flex flex="7" height="100%">
+
+          </Flex>
+
+        </Flex>
+
+      </Flex>
     );
 }
 
