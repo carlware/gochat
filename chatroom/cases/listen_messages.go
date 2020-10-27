@@ -30,6 +30,8 @@ type MessageResponse struct {
 	Type    string        `json:"type"`
 	Message string        `json:"message"`
 	Error   *models.Error `json:"error"`
+	Created time.Time     `json:"created"`
+	ID      string        `json:"id"`
 }
 
 type CommandExtra struct {
@@ -62,16 +64,22 @@ func (s *mServer) Listen() {
 		for result := range results {
 			extra := CommandExtra{}
 			_ = json.Unmarshal([]byte(result.Extra), &extra)
+			message := result.Result
+			if result.Error != nil {
+				message = result.Error.Message
+			}
+			m := addMessage(s.messagedb, extra.RID, message, "bot")
 			response := &MessageResponse{
 				Message: result.Result,
 				Type:    "command",
 				RID:     extra.RID,
-				UID:     extra.UID,
+				UID:     m.UID,
 				Error:   result.Error,
+				Created: m.Created,
+				ID:      m.ID,
 			}
 			encoded, _ := json.Marshal(response)
 			s.br.Broadcast(encoded)
-			addMessage(s.messagedb, extra.RID, result.Result, "bot")
 		}
 	}()
 }
@@ -98,20 +106,25 @@ func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.Command
 		})
 		result := processCommand(&req, extra, cp)
 		if result != nil {
+			m := addMessage(mdb, req.RID, result.Message, "bot")
+			result.Created = m.Created
+			result.ID = m.ID
+			result.UID = m.UID
 			r, _ := json.Marshal(result)
 			br.Broadcast(r)
-			addMessage(mdb, req.RID, result.Message, "bot")
 		}
 	case "message":
+		m := addMessage(mdb, req.RID, req.Message, req.UID)
 		res := &MessageResponse{
 			Type:    "message",
 			RID:     req.RID,
 			UID:     req.UID,
 			Message: req.Message,
+			Created: m.Created,
+			ID:      m.ID,
 		}
 		r, _ := json.Marshal(res)
 		br.Broadcast(r)
-		addMessage(mdb, req.RID, req.Message, req.UID)
 	}
 }
 
@@ -131,12 +144,14 @@ func processCommand(req *MessageRequest, extra []byte, cp cmds.CommandProcesor) 
 	}
 }
 
-func addMessage(mdb chatroom.Message, rid, msg, uid string) {
-	mdb.Add(context.TODO(), &models.Message{
+func addMessage(mdb chatroom.Message, rid, msg, uid string) *models.Message {
+	m := &models.Message{
 		ID:      uuid.New().String(),
 		RID:     rid,
 		UID:     uid,
 		Created: time.Now(),
 		Message: msg,
-	})
+	}
+	mdb.Add(context.TODO(), m)
+	return m
 }

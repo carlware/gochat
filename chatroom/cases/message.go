@@ -2,7 +2,6 @@ package cases
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	"github.com/carlware/gochat/chatroom"
@@ -18,8 +17,6 @@ func ListMessages(opts *OptsMessage, rid string) ([]*models.Message, error) {
 	if err != nil {
 		return []*models.Message{}, nil
 	}
-	fmt.Println(fetched)
-
 	sort.Slice(fetched, func(i, j int) bool { return fetched[i].Created.Before(fetched[j].Created) })
 
 	msgs := []*models.Message{}

@@ -88,7 +88,7 @@ func getStock(cmd string) (string, error) {
 	err = csvtag.LoadFromReader(resp.Body, &stocks)
 
 	if len(stocks) < 1 {
-		return "", errors.New(fmt.Sprintf("Stock: %s not available", cmd))
+		return "", errors.New(fmt.Sprintf("Stock Error: %s is not available", cmd))
 	}
 
 	return fmt.Sprintf("%s quote is $%.2f per share.", cmd, stocks[0].Close), nil

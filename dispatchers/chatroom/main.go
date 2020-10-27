@@ -7,6 +7,7 @@ import (
 	"github.com/carlware/gochat/chatroom/cmds"
 	"github.com/carlware/gochat/chatroom/interfaces/memorydb"
 	"github.com/carlware/gochat/chatroom/models"
+	"github.com/carlware/gochat/common/auth"
 	"github.com/carlware/gochat/common/config"
 	"github.com/carlware/gochat/common/mq/interfaces/rabbitmq"
 	"github.com/carlware/gochat/dispatchers/chatroom/rest"
@@ -30,9 +31,9 @@ func RunMicroChatroom(e *echo.Echo, cfg *config.Configuration) {
 	go hub.Run()
 
 	ctrl := rest.NewChatController(dbRoom, dbMessage, hub)
-	e.GET("/rooms", ctrl.ListRoom)
-	e.POST("/rooms", ctrl.CreateRoom)
-	e.GET("/messages/:id", ctrl.ListMessage)
+	e.GET("/rooms", ctrl.ListRoom, auth.IsLoggedIn)
+	e.POST("/rooms", ctrl.CreateRoom, auth.IsLoggedIn)
+	e.GET("/messages/:id", ctrl.ListMessage, auth.IsLoggedIn)
 	e.GET("/ws", func(c echo.Context) error {
 		websocket.ServeWs(hub, c.Response(), c.Request())
 		return nil
