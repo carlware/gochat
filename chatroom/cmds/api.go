@@ -30,7 +30,7 @@ type MQResponse struct {
 }
 
 type Executor interface {
-	Execute(arg string) string
+	Execute(arg string) (string, error)
 	Prepare(*Request) string
 	Type() string
 }

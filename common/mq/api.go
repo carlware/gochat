@@ -1,11 +1,11 @@
 package mq
 
 type Sender interface {
-	Send([]byte) error
+	Send([]byte, string) error
 }
 
 type Listener interface {
-	Listen() (chan []byte, error)
+	Listen(string) (chan []byte, error)
 }
 
 type ListenSender interface {

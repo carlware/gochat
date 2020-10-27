@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 
 	"github.com/carlware/gochat/chatroom/cases"
 	"github.com/carlware/gochat/chatroom/cmds"
-	"github.com/carlware/gochat/chatroom/interfaces/rabbitmq"
 	"github.com/carlware/gochat/common/auth"
 	"github.com/carlware/gochat/common/config"
+	"github.com/carlware/gochat/common/mq/interfaces/rabbitmq"
 	"github.com/carlware/gochat/dispatchers/rest"
 	"github.com/carlware/gochat/dispatchers/websocket"
+	"github.com/carlware/gochat/stockbot"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -26,25 +26,22 @@ func main() {
 
 	cfg := &config.Configuration{}
 	config.Load(cfg, "GOCHAT", *cfgFile)
-	fmt.Println(cfg)
 
 	hub := websocket.NewHub()
-	qCommadProducer, err := rabbitmq.NewServer(cfg.RabbiMQ.Host, cfg.RabbiMQ.CommandReqQueue)
-	if err != nil {
-		panic(err)
-	}
-	qCommadReceiver, err := rabbitmq.NewServer(cfg.RabbiMQ.Host, cfg.RabbiMQ.CommandResQueue)
+	queue, err := rabbitmq.NewServer(cfg.RabbiMQ.Host)
 	if err != nil {
 		panic(err)
 	}
 
-	cProcesor := cmds.NewCommandProcessor(qCommadProducer, qCommadReceiver)
-	cProcesor.Run()
+	cProcesor := cmds.NewCommandProcessor(queue)
+	go cProcesor.Run()
 
 	go hub.Run()
-	go qCommadReceiver.Listen()
 	mListener := cases.NewMessageListener(hub, cProcesor)
 	mListener.Listen()
+
+	// stockbot
+	go stockbot.Run(cfg)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

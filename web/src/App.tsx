@@ -2,6 +2,27 @@ import React, { useEffect } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
+
+interface Error {
+    Code: string
+    Message: string
+}
+
+interface MessageResponse {
+    rid: string
+    uid: string
+    type: string
+    message: string
+    error: Error
+}
+
+interface MessageRequest {
+    rid: string
+    uid: string
+    type: string
+    message: string
+}
+
 function App() {
     let conn: WebSocket
 
@@ -18,8 +39,23 @@ function App() {
         };
     })
 
-    const sendMessage = (message: string = "") => {
-        conn.send(message)
+    const sendMessage = (msg: string = "") => {
+        const message: MessageRequest = {
+            rid: "general",
+            uid: "1",
+            type: "message",
+            message: msg,
+        }
+        conn.send(JSON.stringify(message))
+    }
+    const sendCommand = (cmd: string = "") => {
+        const message: MessageRequest = {
+            rid: "general",
+            uid: "1",
+            type: "command",
+            message: "stock=" + cmd,
+        }
+        conn.send(JSON.stringify(message))
     }
 
 
@@ -39,6 +75,7 @@ function App() {
                     Learn React
                 </a>
                 <button onClick={() => sendMessage("ping")}>Send</button>
+                <button onClick={() => sendCommand("APPLE.US")}>Command</button>
             </header>
         </div>
     );

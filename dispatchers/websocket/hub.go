@@ -1,8 +1,6 @@
 package websocket
 
 import (
-	"fmt"
-
 	log "github.com/inconshreveable/log15"
 )
 
@@ -40,26 +38,14 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:
-			fmt.Println("new client registered")
 			h.clients[client] = true
 		case client := <-h.unregister:
-			fmt.Println("new client unregistered")
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			fmt.Println("message to client", message)
 			h.send <- message
-			// stockbot.SendMessage(message)
-			// for client := range h.clients {
-			// 	select {
-			// 	case client.send <- message:
-			// 	default:
-			// 		close(client.send)
-			// 		delete(h.clients, client)
-			// 	}
-			// }
 		}
 	}
 }

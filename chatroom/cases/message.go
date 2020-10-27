@@ -43,21 +43,20 @@ func NewMessageListener(br chatroom.BroadcastReceiver, cp cmds.CommandProcesor) 
 
 func (s *mServer) Listen() {
 	// listen
-	fmt.Println("listen incoming messages started")
 	messages, _ := s.br.Receive()
 
 	// Listen incoming messages
 	go func() {
 		for msg := range messages {
-			fmt.Println("incoming message", string(msg))
 			messageProccesor(msg, s.br, s.cp)
 		}
 	}()
 
-	// Listen incoming responses from cmds manager
+	// Listen incoming responses from command procesor
 	go func() {
 		results := s.cp.Results()
 		for result := range results {
+			fmt.Println("message command response procesor", result)
 			extra := CommandExtra{}
 			_ = json.Unmarshal([]byte(result.Extra), &extra)
 			response := &MessageResponse{
@@ -69,10 +68,9 @@ func (s *mServer) Listen() {
 			}
 			encoded, _ := json.Marshal(response)
 			s.br.Broadcast(encoded)
+			fmt.Println("broadcast result")
 		}
 	}()
-
-	fmt.Println("incomming message listener close")
 }
 
 func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.CommandProcesor) {
@@ -105,7 +103,7 @@ func messageProccesor(raw []byte, br chatroom.BroadcastReceiver, cp cmds.Command
 			Type:    "message",
 			RID:     req.RID,
 			UID:     req.UID,
-			Message: string(raw),
+			Message: req.Message,
 		}
 		r, _ := json.Marshal(res)
 		br.Broadcast(r)

@@ -6,27 +6,27 @@ import (
 
 	"github.com/carlware/gochat/chatroom/models"
 	"github.com/carlware/gochat/common/mq"
+	log "github.com/inconshreveable/log15"
 )
 
 var commands CommandHash
 
 type listener struct {
-	commandSender   mq.Sender
-	commandReceiver mq.Listener
-	send            chan []byte
-	results         chan *Response
+	mq      mq.ListenSender
+	send    chan []byte
+	results chan *Response
 }
 
 func init() {
 	commands = CommandHash{}
+	commands["stock"] = &stock{}
 }
 
-func NewCommandProcessor(sender mq.Sender, receiver mq.Listener) *listener {
+func NewCommandProcessor(ls mq.ListenSender) *listener {
 	return &listener{
-		send:            make(chan []byte),
-		results:         make(chan *Response),
-		commandSender:   sender,
-		commandReceiver: receiver,
+		send:    make(chan []byte),
+		results: make(chan *Response),
+		mq:      ls,
 	}
 }
 
@@ -39,12 +39,29 @@ func (p *listener) Process(req *Request) {
 				Command: prep,
 				Extra:   req.Extra,
 			})
-			p.commandSender.Send(raw)
+			p.mq.Send(raw, "request")
 		case "fast":
-			result := cmd.Execute(req.Command.Name)
-			p.results <- &Response{
+			result, err := cmd.Execute(req.Command.Name)
+			resp := &Response{
 				Result: result,
 			}
+			if err != nil {
+				resp.Error = &models.Error{
+					Code:    "command",
+					Message: err.Error(),
+				}
+			}
+			p.results <- resp
+		default:
+			log.Info("cannot process command", "type", cmd.Type())
+		}
+	} else {
+		p.results <- &Response{
+			Extra: req.Extra,
+			Error: &models.Error{
+				Code:    "command",
+				Message: "command does not exist",
+			},
 		}
 	}
 }
@@ -64,19 +81,16 @@ func (p *listener) IsCommand(raw string) (*Command, bool) {
 	}, true
 }
 
-func Add(name string, command Executor) {
-	commands[name] = command
-}
-
 func (p *listener) Run() {
-
 	// Listen for MQ broker results
 	go func() {
-		consumer, _ := p.commandReceiver.Listen()
+		consumer, _ := p.mq.Listen("results")
+
 		for msg := range consumer {
 			mRes := &MQResponse{}
 			res := &Response{}
 			err := json.Unmarshal(msg, mRes)
+
 			if err != nil {
 				res.Error = &models.Error{
 					Code:    "json",
