@@ -15,5 +15,5 @@ type Room interface {
 // Message
 type Message interface {
 	Add(context.Context, *models.Message) (*models.Message, error)
-	ListByRoom(context.Context, string) ([]*models.Message, error)
+	List(context.Context) ([]*models.Message, error)
 }

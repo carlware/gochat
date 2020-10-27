@@ -4,13 +4,10 @@ import (
 	"context"
 	"flag"
 
-	"github.com/carlware/gochat/chatroom/cases"
-	"github.com/carlware/gochat/chatroom/cmds"
 	"github.com/carlware/gochat/common/auth"
 	"github.com/carlware/gochat/common/config"
-	"github.com/carlware/gochat/common/mq/interfaces/rabbitmq"
+	"github.com/carlware/gochat/dispatchers/chatroom"
 	"github.com/carlware/gochat/dispatchers/rest"
-	"github.com/carlware/gochat/dispatchers/websocket"
 	"github.com/carlware/gochat/stockbot"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -22,39 +19,29 @@ var ctx = context.Background()
 
 func main() {
 	flag.Parse()
+
+	// configure echo
 	e := echo.New()
-
-	cfg := &config.Configuration{}
-	config.Load(cfg, "GOCHAT", *cfgFile)
-
-	hub := websocket.NewHub()
-	queue, err := rabbitmq.NewServer(cfg.RabbiMQ.Host)
-	if err != nil {
-		panic(err)
-	}
-
-	cProcesor := cmds.NewCommandProcessor(queue)
-	go cProcesor.Run()
-
-	go hub.Run()
-	mListener := cases.NewMessageListener(hub, cProcesor)
-	mListener.Listen()
-
-	// stockbot
-	go stockbot.Run(cfg)
-
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Static("/", "./web/build")
-	e.GET("/ws", func(c echo.Context) error {
-		websocket.ServeWs(hub, c.Response(), c.Request())
-		return nil
-	})
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowMethods: []string{"POST", "GET"},
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
+
+	// dispatch react app
+	e.Static("/", "./web/build")
+
+	// get default configuration or use file configuration
+	cfg := &config.Configuration{}
+	config.Load(cfg, "GOCHAT", *cfgFile)
+
+	// run microservice chat
+	chatroom.RunMicroChatroom(e, cfg)
+
+	// stockbot
+	go stockbot.Run(cfg)
 
 	e.GET("/profiles", rest.ListProfiles, auth.IsLoggedIn)
 	e.POST("/login", rest.Login)
