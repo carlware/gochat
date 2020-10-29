@@ -1,6 +1,6 @@
-# Chat written in golang with bot command
+# Chat written in golang
 
-This is chat application composed with three micro-services, one handle the user authentication, another chatrooms, and the third one get stock prices.
+This is chat application is composed by three micro-services, one handle the user authentication, another chatrooms, and the third one get stock prices. (more commands can be added)
 
 ## How to Run
 ```
@@ -28,9 +28,9 @@ In the sequence diagram below is shown what happen when a user send a message an
 
 ![sequence](https://github.com/carlware/gochat/blob/crl/dev3/design/sequence.svg "Sequence")
 
-Once the user makes login a WS connection is established between the browser and the client. This connection is closed until the user close the browser tab. Then, the user can send any type the data to the server but the microservice handle a specific request and response types, any attempt to send data that does not satisfy the request definition will return an error response.  
+Once the user makes login a WS connection is established between the browser and the client. This connection is closed until the user close the browser tab. Then, the user can send any type the data to the server but the microservice handle a specific request and response types, any attempt to send data that does not satisfy the request definition is going to result in a error response.  
 
-Until now, there are two type of requests. Message request only broadcast the message to all the clients connected. Command request first computed the result and then broadcast the result to all the clients too.  
+Until now, there are two type of requests (`message` and `command`). `Message` request only broadcast the message to all the clients connected. `Command` request first computed the result and then broadcast the result to all the clients too.  
 
 By the design, there are two types of command, `fast` and `queue`. Fast commands are executed immediately and queue and send to a MQ broker. Then another microservice listen for the command and send the result back.  
 
@@ -38,6 +38,9 @@ This diagram show the package architecture. Some interfaces where created in ord
 
 ![arch](https://github.com/carlware/gochat/blob/crl/dev3/design/arch.svg "Architecture")
 
+The other two microservices are not very fun like this one ;).  
+
+I need to mention that test cases are not implemented until now because is project was a challenge with a deadline. No worries test cases and a nice coverage will be implemented soon. I don't recommend launch anything to production without test cases.  
 
 ## How to test
 There are three users available: `carlos`, `john` and `gerard`, the password for the three users is `1234`.  
@@ -46,7 +49,7 @@ Once the user make a successfully login a session key is stored in the browser, 
 
 
 ## Future work
-I noticed that allow `fast` commands is not maintainable. If this service scale maintain the code is going to result in a bottleneck. If new commands are added a new version of the service will be deployed. This characteristic will be removed. It is better only have commands that are queued and another microservice listen and returns the result. However a nice feature would be wait certain time and if nobody respond return an error to client.  
+I noticed that allow `fast` commands is not maintainable. If this service scale maintain the code is going to result in a bottleneck. If new commands are added a new version of the service will be deployed. This characteristic will be removed. It is better only have commands that are queued, then another microservice listen and returns the result. However a nice feature would be wait certain time and if nobody respond return an error to client.  
 
 
 ## TODO
