@@ -20,7 +20,7 @@ func (ctr *controller) ListMessage(c echo.Context) error {
 	}, idStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, &models.Error{
-			Code:    "Server",
+			Code:    "server",
 			Message: err.Error(),
 		})
 	}

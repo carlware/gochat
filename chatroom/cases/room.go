@@ -27,6 +27,7 @@ type CreateRoomRequest struct {
 	Name string `json:"name"`
 }
 
+// TODO rename to CreateRoomResponse
 type RoomResponse struct {
 	Type    string        `json:"type"`
 	Message string        `json:"message"`

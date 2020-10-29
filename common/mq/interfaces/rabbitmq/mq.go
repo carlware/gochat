@@ -104,7 +104,7 @@ func (p *server) Listen(topic string) (chan []byte, error) {
 		return nil, err
 	}
 
-	msgs, err := ch.Consume(queue.Name, "", true, false, false, false, nil)
+	msgs, err := ch.Consume(queue.Name, "", false, false, false, false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +112,11 @@ func (p *server) Listen(topic string) (chan []byte, error) {
 	recv := make(chan []byte)
 	go func() {
 		for msg := range msgs {
-			log.Info("Receiving to RabbitMQ", "queue", topic, "data", string(msg.Body))
-			recv <- msg.Body
+			if msg.RoutingKey == topic {
+				log.Info("Receiving to RabbitMQ", "queue", topic, "data", string(msg.Body))
+				recv <- msg.Body
+				msg.Ack(true)
+			}
 		}
 	}()
 

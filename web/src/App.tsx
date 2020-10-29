@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {Flex, Avatar, Button, Input, Stack, Text, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody} from '@chakra-ui/core';
+import {Flex, Avatar, Button, Input, Stack, Text, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody} from '@chakra-ui/core';
 import './App.css';
 import moment from 'moment'
 
@@ -59,42 +59,6 @@ interface Room {
 }
 
 
-interface RoomListProps {
-  messages: Message[]
-}
-
-function RoomList({ messages=[] }: RoomListProps) {
-  return(
-    <span>room list</span>
-  )
-}
-
-function Room() {
-  
-  return(
-  <>
-    <span>room</span>
-  </>
-  ) 
-}
-
-function Rooms() {
-
-}
-
-function NewRoom() {
-
-}
-
-function SendMessage() {
-
-}
-
-function LoginModal() {
-
-}
-
-
 interface Session {
   name: string
   token: string
@@ -130,7 +94,7 @@ function App() {
       const session = JSON.parse(s) as Session
       setSession(session)
       onClose()
-    }, [])
+    }, [onClose])
 
     useEffect(() => {
         // @ts-ignore

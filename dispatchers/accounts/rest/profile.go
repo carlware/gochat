@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/carlware/gochat/accounts/cases"
@@ -27,7 +26,6 @@ func Login(c echo.Context) error {
 	}
 
 	jwt, err := cases.Login(req)
-	fmt.Println(jwt, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, &models.Error{
 			Code:    "login",

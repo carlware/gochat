@@ -9,8 +9,8 @@ type Configuration struct {
 	} `yaml:"debug"`
 
 	RabbiMQ struct {
-		Host            string `yaml:"host" default:"amqp://guest:guest@localhost:5672/"`
-		TopicCommandReq string `yaml:"command_req_queue" default:"command.req"`
-		TopicCommandRes string `yaml:"command_res_queue" default:"command.res"`
+		Host                 string `yaml:"host" default:"amqp://guest:guest@localhost:5672/"`
+		TopicCommandRequest  string `yaml:"command_req_queue" default:"command.req"`
+		TopicCommandResponse string `yaml:"command_res_queue" default:"command.res"`
 	} `yaml:"psql"`
 }

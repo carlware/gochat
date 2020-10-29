@@ -7,8 +7,9 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-const TTL = time.Hour * 24 * 365 * 2
+const TTL = time.Hour * 24 * 30
 
+// TODO: this is harcoded must be retrieve from an evironment variable
 var SIGNED_KEY = []byte("verysecret")
 
 var IsLoggedIn = middleware.JWTWithConfig(middleware.JWTConfig{

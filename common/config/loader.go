@@ -46,7 +46,7 @@ func AsEnvVariables(o interface{}, prefix string, skipCommented bool) map[string
 	return r
 }
 
-// Load a config
+// Load a configuration file
 func Load(conf interface{}, envPrefix string, cfgFile string) error {
 	// Apply defaults first
 	defaults.SetDefaults(conf)

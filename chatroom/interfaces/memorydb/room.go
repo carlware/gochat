@@ -8,6 +8,8 @@ import (
 	"github.com/carlware/gochat/chatroom/models"
 )
 
+// Warining: this does not support currency, just for demo
+
 type room struct {
 }
 

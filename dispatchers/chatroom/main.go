@@ -16,6 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// RunMicroChatroom wire up everything needed
 func RunMicroChatroom(e *echo.Echo, cfg *config.Configuration) {
 	dbRoom := memorydb.NewRoom()
 	dbMessage := memorydb.NewMessage()
@@ -31,15 +32,18 @@ func RunMicroChatroom(e *echo.Echo, cfg *config.Configuration) {
 	go hub.Run()
 
 	ctrl := rest.NewChatController(dbRoom, dbMessage, hub)
+
+	// rooms API
 	e.GET("/rooms", ctrl.ListRoom, auth.IsLoggedIn)
 	e.POST("/rooms", ctrl.CreateRoom, auth.IsLoggedIn)
-	e.GET("/messages/:id", ctrl.ListMessage, auth.IsLoggedIn)
-	e.GET("/ws", func(c echo.Context) error {
-		websocket.ServeWs(hub, c.Response(), c.Request())
-		return nil
-	})
 
-	// create rabbit queue
+	// messages API
+	e.GET("/messages/:id", ctrl.ListMessage, auth.IsLoggedIn)
+
+	// Websocket API
+	e.GET("/ws", ctrl.WS)
+
+	// Create rabbit queue
 	queue, err := rabbitmq.NewServer(cfg.RabbiMQ.Host)
 	if err != nil {
 		panic(err)
@@ -52,5 +56,4 @@ func RunMicroChatroom(e *echo.Echo, cfg *config.Configuration) {
 	// listen incoming messages from websocket and process commands from it
 	mListener := cases.NewMessageListener(hub, cProcesor, dbMessage)
 	mListener.Listen()
-
 }

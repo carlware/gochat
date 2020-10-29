@@ -6,6 +6,7 @@ import (
 	"github.com/carlware/gochat/chatroom"
 	"github.com/carlware/gochat/chatroom/cases"
 	"github.com/carlware/gochat/chatroom/models"
+	"github.com/carlware/gochat/dispatchers/websocket"
 	"github.com/labstack/echo/v4"
 )
 
@@ -13,13 +14,15 @@ type controller struct {
 	roomdb    chatroom.Room
 	messagedb chatroom.Message
 	br        chatroom.BroadcastReceiver
+	hub       *websocket.Hub
 }
 
-func NewChatController(roomdb chatroom.Room, messagedb chatroom.Message, br chatroom.BroadcastReceiver) *controller {
+func NewChatController(roomdb chatroom.Room, messagedb chatroom.Message, hub *websocket.Hub) *controller {
 	return &controller{
 		roomdb:    roomdb,
 		messagedb: messagedb,
-		br:        br,
+		br:        hub,
+		hub:       hub,
 	}
 }
 
