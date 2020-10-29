@@ -15,7 +15,11 @@ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-manag
 go run main.go
 
 # visit
-http://localhost:8080/
+[http://localhost:8080](http://localhost:8080/)
+# login with
+# carlos : 1234
+# john   : 1234
+# gerard : 1234
 
 ```
 
