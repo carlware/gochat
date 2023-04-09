@@ -1,9 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+.idea/
+vendor/
 
 # dependencies
-/web/node_modules
-/web/.pnp
-/web/.pnp.js
+web/node_modules
+web/*.pnp
+web/*.pnp.js
+web/build/
 
 # testing
 web/coverage
